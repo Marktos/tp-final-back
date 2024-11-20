@@ -1,24 +1,25 @@
-import { Test, TestingModule } from '@nestjs/testing';
-import { INestApplication } from '@nestjs/common';
-import * as request from 'supertest';
-import { AppModule } from './../src/app.module';
+import { PrismaClient } from '@prisma/client';
 
-describe('AppController (e2e)', () => {
-  let app: INestApplication;
+const prisma = new PrismaClient();
 
-  beforeEach(async () => {
-    const moduleFixture: TestingModule = await Test.createTestingModule({
-      imports: [AppModule],
-    }).compile();
-
-    app = moduleFixture.createNestApplication();
-    await app.init();
+async function main() {
+  // Crear un nuevo usuario
+  const newUser = await prisma.user.create({
+    data: {
+      email: 'test@example.com',
+      name: 'Test User',
+      password: 'password123',
+    },
   });
+  console.log('Usuario creado:', newUser);
 
-  it('/ (GET)', () => {
-    return request(app.getHttpServer())
-      .get('/')
-      .expect(200)
-      .expect('Hello World!');
+  // Listar usuarios
+  const users = await prisma.user.findMany();
+  console.log('Usuarios en la base de datos:', users);
+}
+
+main()
+  .catch((e) => console.error(e))
+  .finally(async () => {
+    await prisma.$disconnect();
   });
-});
