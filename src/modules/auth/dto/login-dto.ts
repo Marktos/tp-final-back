@@ -10,6 +10,6 @@ export class Login {
     @IsString()
     @MinLength(8)
     @IsNotEmpty()
-    @Transform(({ value }) => value.trim())
+    @Transform(({ value }) => value.trim())  // Elimina espacios antes y después
     password: string;
 }

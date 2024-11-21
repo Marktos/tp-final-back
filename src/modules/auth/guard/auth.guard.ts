@@ -4,6 +4,11 @@ import { Request } from 'express';
 
 @Injectable()
 export class AuthGuard implements CanActivate {
+
+  constructor(
+    private readonly jwtService: JwtService 
+  ){}
+
   async canActivate(
     context: ExecutionContext,
   ): Promise<boolean> {
@@ -15,8 +20,12 @@ export class AuthGuard implements CanActivate {
     }
     try {
       const payload = await this.jwtService.verifyAsync(token, {
-        secret: process.env.TOKEN,
+        secret: process.env.SECRET,
       })
+
+      request.user = payload
+    }catch (error) {
+      throw new UnauthorizedException()
     }
     return true;
   }

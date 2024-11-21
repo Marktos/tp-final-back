@@ -1,34 +1,26 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { Registro } from './dto/registro-dto';
 import { Login } from './dto/login-dto';
+import { AuthGuard } from './guard/auth.guard';
+import { roles } from 'src/common/decorator/roles';
+import { RolesGuard } from './guard/roles.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
-  @Post()
-  create(@Body() Registro: Registro) {
-    return this.authService.create(Registro);
+  // El registro debe estar restringido a superadmin
+  @UseGuards(AuthGuard, RolesGuard)
+  @roles('superadmin')
+  @Post('register')
+  register(@Body() registro: Registro) {
+    return this.authService.register(registro);
   }
 
-  @Get()
-  findAll() {
-    return this.authService.findAll();
-  }
-
-  @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.authService.findOne(+id);
-  }
-
-  @Patch(':id')
-  update(@Param('id') id: string, @Body() Login: Login) {
-    return this.authService.update(+id, Login);
-  }
-
-  @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.authService.remove(+id);
+  // El login debe ser accesible a todos los usuarios
+  @Post('login')
+  login(@Body() login: Login) {
+    return this.authService.login(login);
   }
 }

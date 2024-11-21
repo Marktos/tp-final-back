@@ -2,8 +2,11 @@ import { Transform } from "class-transformer";
 import { IsDate, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
 
 export class CreateUsuarioDto {
+
     @IsOptional()
-    id?: number;
+    @IsString()
+    @MinLength(6)
+    name?: string
 
     @IsNotEmpty()
     @IsEmail()

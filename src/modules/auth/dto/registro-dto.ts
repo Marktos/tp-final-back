@@ -1,7 +1,11 @@
 import { Transform } from "class-transformer";
-import { IsEmail, IsNotEmpty, IsString, MinLength } from "class-validator";
+import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
 
 export class Registro {
+
+    @IsOptional()
+    @IsString()
+    name?: string;
 
     @IsEmail()
     @IsNotEmpty()
@@ -10,6 +14,6 @@ export class Registro {
     @IsString()
     @MinLength(8) 
     @IsNotEmpty()
-    @Transform(({ value }) => value.trim())
+    @Transform(({ value }) => value.trim())  
     password: string;
 }
