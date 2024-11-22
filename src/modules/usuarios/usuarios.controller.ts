@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  ParseIntPipe,
+  UseGuards,
+} from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
 import { CreateUsuario } from './dto/create-usuario.dto';
 import { UpdateUsuario } from './dto/update-usuario.dto';
@@ -31,25 +41,37 @@ export class UsuariosController {
 
   @Patch(':id')
   @roles('superadmin')
-  update(@Param('id', ParseIntPipe) id: number, @Body() updateUsuario: UpdateUsuario) {
+  update(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUsuario: UpdateUsuario,
+  ) {
     return this.usuariosService.update(+id, updateUsuario);
   }
 
   @Patch('admin/:id')
   @roles('superadmin')
-  changeToAdmin(@Param('id', ParseIntPipe) id: number, @Body() updateUsuario: UpdateUsuario) {
+  changeToAdmin(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUsuario: UpdateUsuario,
+  ) {
     return this.usuariosService.changeToAdmin(+id);
   }
 
-  @Patch('user/:id')
+  @Patch('usuarios/:id')
   @roles('superadmin')
-  changeToUser(@Param('id', ParseIntPipe) id: number, @Body() updateUsuario: UpdateUsuario) {
+  changeToUser(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUsuario: UpdateUsuario,
+  ) {
     return this.usuariosService.changeToUser(+id);
   }
 
   @Patch('role/:id')
   @roles('superadmin')
-  changeRole(@Param('id', ParseIntPipe) id: number, @Body() updateUsuario: UpdateUsuario) {
+  changeRole(
+    @Param('id', ParseIntPipe) id: number,
+    @Body() updateUsuario: UpdateUsuario,
+  ) {
     return this.usuariosService.changeRole(+id);
   }
 
@@ -64,5 +86,4 @@ export class UsuariosController {
   restore(@Param('id', ParseIntPipe) id: number) {
     return this.usuariosService.restore(+id);
   }
-
 }
