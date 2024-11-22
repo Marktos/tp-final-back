@@ -6,9 +6,9 @@ import { AuthGuard } from '../auth/guard/auth.guard';
 import { RoleGuard } from '../auth/guard/roles.guard';
 import { roles } from '../../common/decorator/roles';
 
-@Controller('users')
+@Controller('usuarios')
 @UseGuards(AuthGuard, RoleGuard)
-export class UsersController {
+export class UsuariosController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
