@@ -36,13 +36,13 @@ export class ProductosService {
   /**
    * Busca un producto por su ID. Puede incluir eliminados si se especifica.
    * @param id Identificador del producto.
-   * @param includeDeleted Indica si se incluyen productos eliminados.
+   * @param getDeletes Indica si se incluyen productos eliminados.
    * @returns El producto encontrado.
    */
-  async findOne(id: number, includeDeleted: boolean = false): Promise<CreateProductoDto> {
+  async findOne(id: number, getDeletes?: boolean) : Promise<CreateProductoDto> {
     // Define los criterios de búsqueda.
     const whereCondition = { id, deletedAt: null };
-    if (includeDeleted) delete whereCondition.deletedAt;
+    if (getDeletes) delete whereCondition['deletedAt'];
 
     // Busca el producto en la base de datos.
     const producto = await this.prisma.product.findFirst({ where: whereCondition });

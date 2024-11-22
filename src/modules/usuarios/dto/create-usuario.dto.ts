@@ -1,28 +1,25 @@
-import { Transform } from "class-transformer";
-import { IsDate, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from "class-validator";
+import {IsDate, IsEmail, IsNotEmpty, IsOptional, IsString, MinLength} from 'class-validator'
+import { Transform } from 'class-transformer'
 
-export class CreateUsuarioDto {
-
+export class CreateUsuario {
     @IsOptional()
-    @IsString()
-    @MinLength(6)
-    name?: string
+    id?: number
 
     @IsNotEmpty()
     @IsEmail()
-    email: string;
+    email: string
 
     @IsNotEmpty()
-    @MinLength(8)
     @IsString()
+    @MinLength(6)
     @Transform(({ value }) => value.trim())
-    password: string;
+    password: string
 
     @IsOptional()
     @IsString()
-    role?: string;
+    role?: string
 
-    @IsDate()
     @IsOptional()
-    deletedAt?: Date;
+    @IsDate()
+    deletedAt?: Date
 }

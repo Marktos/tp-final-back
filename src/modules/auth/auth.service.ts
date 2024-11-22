@@ -10,14 +10,14 @@ export class AuthService {
   constructor(private usuarioService: UsuariosService, private jwtService: JwtService) {}
 
   // Registro de usuario
-  async register({ name, password, email }: Registro) {
+  async register({ password, email }: Registro) {
     try {
-      await this.usuarioService.create({ name, email, password });
+      await this.usuarioService.create({ email, password });
       return {
         message: "User created successfully",
       };
     } catch (error) {
-      throw new UnauthorizedException('Error creating user');  // Excepción controlada en caso de error
+      throw new UnauthorizedException('Error al crear al usuario');  // Excepción controlada en caso de error
     }
   }
 
@@ -26,13 +26,13 @@ export class AuthService {
     // Busca el usuario por correo
     const user = await this.usuarioService.findOneByEmail(email);
     if (!user) {
-      throw new UnauthorizedException("Invalid credentials");  // Error más general para no exponer detalles específicos
+      throw new UnauthorizedException("Credenciales Invalidas");  // Error más general para no exponer detalles específicos
     }
 
     // Verifica la contraseña
-    const isPasswordValid = await checkPassword(password, user.password);
-    if (!isPasswordValid) {
-      throw new UnauthorizedException("Invalid credentials");  // Error genérico para evitar ataques de enumeración
+    const PasswordValid = await checkPassword(password, user.password);
+    if (!PasswordValid) {
+      throw new UnauthorizedException("Credenciales Invalidas");  // Error genérico para evitar ataques de enumeración
     }
 
     // Crea el payload para el JWT (lo mínimo necesario)

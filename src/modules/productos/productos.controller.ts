@@ -3,11 +3,11 @@ import { ProductosService } from './productos.service';
 import { CreateProductoDto } from './dto/create-producto.dto';
 import { UpdateProductoDto } from './dto/update-producto.dto';
 import { roles } from 'src/common/decorator/roles';
-import { RolesGuard } from '../auth/guard/roles.guard';
+import { RoleGuard } from '../auth/guard/roles.guard';
 import { AuthGuard } from '../auth/guard/auth.guard';
 
 @Controller('productos')
-@UseGuards(AuthGuard, RolesGuard)
+@UseGuards(AuthGuard, RoleGuard)
 export class ProductosController {
   constructor(private readonly productosService: ProductosService) {}
   

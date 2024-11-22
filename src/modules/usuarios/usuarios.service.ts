@@ -1,139 +1,134 @@
-import { BadRequestException, Inject, Injectable, NotFoundException } from '@nestjs/common';
-import { CreateUsuarioDto } from './dto/create-usuario.dto';
-import { UpdateUsuarioDto } from './dto/update-usuario.dto';
-import { PrismaService } from 'src/prisma/prisma.service';
-import { REQUEST } from '@nestjs/core';
+import {
+  BadRequestException,
+  Inject,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
+import { CreateUsuario } from './dto/create-usuario.dto';
+import { UpdateUsuario } from './dto/update-usuario.dto';
+import { PrismaService } from '../../prisma/prisma.service';
 import { hashPassword } from 'src/helper/auth.helper';
+import { REQUEST } from '@nestjs/core';
 
 @Injectable()
 export class UsuariosService {
   constructor(
     private prisma: PrismaService,
-    @Inject(REQUEST) private readonly request: Request
+    @Inject(REQUEST) private readonly request: Request,
   ) {}
 
-  // Método para crear un superadmin si no existe
-  async createSuperAdmin() {
-    const superadmin = await this.prisma.user.findMany({
-      where: { role: 'superadmin' }, 
-      take: 1, // Limitar la búsqueda a un solo resultado
-    });
-
-    if (!superadmin) {
-      // Si no hay superadmin, crea uno
-      const superadminDto = {
-        email: 'super@admin.com', 
-        password: 'admin', 
-        role: 'superadmin',
-        name: 'Super Admin',
-      };
-
-      await this.create(superadminDto);
-    }
-  }
-
-  async create(createUsuarioDto: CreateUsuarioDto): Promise<CreateUsuarioDto> {
+  async create(createUsuarioDto: CreateUsuario): Promise<CreateUsuario> {
     const { email } = createUsuarioDto;
 
+    //Hasheo la contraseña
     createUsuarioDto.password = await hashPassword(createUsuarioDto.password);
 
-    const existingUser = await this.prisma.user.findUnique({ where: { email } });
-
-    if (existingUser && !existingUser.deletedAt) {
-      throw new BadRequestException('User Already Exists');
+    //Verifico si el usuario existe
+    // Verifico si el usuario existe
+    const user = await this.prisma.user.findUnique({ where: { email } });
+    if (user) {
+      if (!user.deletedAt) {
+        throw new BadRequestException('User Already Exists');
+      }
+      //Si el usuario tiene un deletedAt quiere decir que fue borrado
+      //Osea que puedo usar su correo para crear otro usuario
+      await this.prisma.user.delete({ where: { email: user.email } });
     }
 
-    if (existingUser && existingUser.deletedAt) {
-      await this.prisma.user.delete({ where: { email: existingUser.email } });
-    }
-
-    const newUser = await this.prisma.user.create({
-      data: { ...createUsuarioDto },
-    });
-
-    return newUser;
+    //Creo el usuario
+    return await this.prisma.user.create({ data: { ...createUsuarioDto } });
   }
 
-  async findAll(): Promise<CreateUsuarioDto[]> {
-    const users = await this.prisma.user.findMany({ where: { deletedAt: null } });
+  async findAll(): Promise<CreateUsuario[]> {
+    const users = await this.prisma.user.findMany({
+      where: { deletedAt: null },
+    });
 
-    // Verifico si hay usuarios
+    //Verifico si hay usuarios
     if (users.length === 0) throw new NotFoundException('Could Not Find Users');
 
     return users;
   }
 
-  async findOne(id: number, getDeletes?: boolean): Promise<CreateUsuarioDto> {
+  async findOne(id: number, getDeletes?: boolean): Promise<CreateUsuario> {
     const where = { id, deletedAt: null };
     if (getDeletes) delete where['deletedAt'];
     const user = await this.prisma.user.findFirst({ where });
-    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user) throw new NotFoundException('User Not Found');
 
     return user;
   }
 
-  async findOneByEmail(email: string, getDeletes?: boolean): Promise<CreateUsuarioDto> {
+  async findOneByEmail(
+    email: string,
+    getDeletes?: boolean,
+  ): Promise<CreateUsuario> {
     const where = { email, deletedAt: null };
     if (getDeletes) delete where['deletedAt'];
     const user = await this.prisma.user.findFirst({ where });
-    if (!user) throw new NotFoundException('Usuario no encontrado');
+    if (!user) throw new NotFoundException('User Not Found');
 
     return user;
   }
 
   async update(
     id: number,
-    updateUsuarioDto: Partial<UpdateUsuarioDto>,
-    getDeletes?: boolean
+    updateUserDto: Partial<UpdateUsuario>,
+    getDeletes?: boolean,
   ) {
     const user = await this.findOne(id, getDeletes);
 
-    // Validar si el email está en uso
-    if (updateUsuarioDto.email) {
-      const isEmailInUse = await this.prisma.user.findFirst({
-        where: { email: updateUsuarioDto.email, id: { not: id } },
+    //Evito errores cuando se utiliza el mismo email dos veces
+    if (updateUserDto.email !== undefined) {
+      const isUsed = await this.prisma.user.findFirst({
+        where: { email: updateUserDto.email },
       });
-
-      if (isEmailInUse) {
-        throw new BadRequestException('Este email ya está en uso');
-      }
+      if (isUsed) throw new BadRequestException('Email is already used');
     }
 
     return await this.prisma.user.update({
       where: { id },
-      data: { ...updateUsuarioDto }, // Usamos el objeto recibido como parámetros
+      data: updateUserDto,
     });
   }
 
-  async promoteToAdmin(id: number) {
-    return this.update(id, { role: 'admin' });
+  async changeToAdmin(id: number) {
+    const user = await this.update(id, { role: 'admin' }, false);
+    return user;
   }
 
-  async demoteToUser(id: number) {
-    return this.update(id, { role: 'user' });
+  async changeToUser(id: number) {
+    const user = await this.update(id, { role: 'user' }, false);
+    return user;
   }
 
-  async toggleRole(id: number) {
+  async changeRole(id: number) {
     const user = await this.findOne(id);
 
     if (user.role === 'admin') {
-      return this.update(id, { role: 'user' });
+      const newUser = this.update(id, { role: 'user' });
+      return newUser;
     } else if (user.role === 'user') {
-      return this.update(id, { role: 'admin' });
+      const newUser = await this.update(id, { role: 'admin' });
+      return newUser;
     } else {
-      throw new BadRequestException('El rol de Superadmin no se puede cambiar');
+      throw new BadRequestException('Superadmin cant change role');
     }
   }
 
-  async softDelete(id: number) {
-    const user = await this.findOne(id);
+  async remove(id: number) {
+    const user = await this.findOne(id, false);
+
     if (user.role === 'superadmin') {
-      throw new BadRequestException('Superadmin no se puede borrar');
+      throw new BadRequestException('Superadmin cant be deleted');
     }
-    return await this.update(id, { deletedAt: new Date() });
+
+    await this.update(id, { deletedAt: new Date() });
+    return `#${user.email} has been deleted`;
   }
 
-  async restoreUser(id: number) {
-    return await this.update(id, { deletedAt: null });
+  async restore(id: number) {
+    const user = await this.update(id, { deletedAt: null }, true);
+    return user;
   }
 }

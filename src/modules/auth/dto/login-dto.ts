@@ -8,7 +8,7 @@ export class Login {
     email: string;
 
     @IsString()
-    @MinLength(8)
+    @MinLength(6)
     @IsNotEmpty()
     @Transform(({ value }) => value.trim())  // Elimina espacios antes y después
     password: string;

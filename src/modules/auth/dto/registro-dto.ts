@@ -3,16 +3,12 @@ import { IsEmail, IsNotEmpty, IsOptional, IsString, MinLength } from "class-vali
 
 export class Registro {
 
-    @IsOptional()
-    @IsString()
-    name?: string;
-
     @IsEmail()
     @IsNotEmpty()
     email: string;
 
     @IsString()
-    @MinLength(8) 
+    @MinLength(6) 
     @IsNotEmpty()
     @Transform(({ value }) => value.trim())  
     password: string;

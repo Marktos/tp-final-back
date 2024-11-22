@@ -1,30 +1,34 @@
-import { CanActivate, ExecutionContext, Injectable } from '@nestjs/common';
-import { Reflector } from '@nestjs/core';
-import { UnauthorizedException, ForbiddenException } from '@nestjs/common';
+import { CanActivate, ExecutionContext, ForbiddenException, Injectable, UnauthorizedException } from "@nestjs/common";
+import { Reflector } from "@nestjs/core";
 
 @Injectable()
-export class RolesGuard implements CanActivate {
-constructor(private reflector: Reflector) {}
+export class RoleGuard implements CanActivate {
+    constructor(
+        private readonly reflector: Reflector, // Reflector se usa para obtener metadata del decorador
+    ){}
 
-canActivate(context: ExecutionContext): boolean {
-    // Obtener los roles requeridos desde la metadata
-    const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
-    if (!requiredRoles) return true; // Si no se especificaron roles, permitir el acceso.
+    canActivate(context: ExecutionContext): boolean {
+        const request = context.switchToHttp().getRequest();
+        const user = request.user; // Usuario ya almacenado en el request
 
-    // Obtener el usuario del request
-    const request = context.switchToHttp().getRequest();
-    const user = request.user;
+        if (!user) {
+            throw new ForbiddenException('User Not Authenticated');
+        }
 
-    if (!user) {
-        throw new UnauthorizedException('No autenticado');
-    }
+        // Obtener los roles requeridos desde la metadata de la ruta
+        const requiredRoles = this.reflector.get<string[]>('roles', context.getHandler());
+        if (!requiredRoles || requiredRoles.length === 0) {
+            return true; // Si no hay roles requeridos, permitir acceso
+        }
 
-    // Verificar si el usuario tiene al menos uno de los roles requeridos
-    const hasRole = requiredRoles.some((role) => user.role.includes(role));
-    if (!hasRole) {
-        throw new ForbiddenException('No tienes los permisos necesarios');
-    }
+        // Verificar si el usuario tiene uno de los roles requeridos
+        const userRoles = user.role || []; // Asume que el usuario tiene una propiedad "role"
+        const hasRole = requiredRoles.some(role => userRoles.includes(role));
 
-    return true;
+        if (!hasRole) {
+            throw new ForbiddenException('You cannot access this route');
+        }
+
+        return true;
     }
 }

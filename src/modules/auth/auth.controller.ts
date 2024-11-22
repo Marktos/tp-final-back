@@ -4,14 +4,14 @@ import { Registro } from './dto/registro-dto';
 import { Login } from './dto/login-dto';
 import { AuthGuard } from './guard/auth.guard';
 import { roles } from 'src/common/decorator/roles';
-import { RolesGuard } from './guard/roles.guard';
+import { RoleGuard } from './guard/roles.guard';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   // El registro debe estar restringido a superadmin
-  @UseGuards(AuthGuard, RolesGuard)
+  @UseGuards(AuthGuard, RoleGuard)
   @roles('superadmin')
   @Post('register')
   register(@Body() registro: Registro) {

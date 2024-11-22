@@ -1,46 +1,68 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, UseGuards, ParseIntPipe } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, ParseIntPipe, UseGuards } from '@nestjs/common';
 import { UsuariosService } from './usuarios.service';
-import { CreateUsuarioDto } from './dto/create-usuario.dto';
-import { UpdateUsuarioDto } from './dto/update-usuario.dto';
+import { CreateUsuario } from './dto/create-usuario.dto';
+import { UpdateUsuario } from './dto/update-usuario.dto';
 import { AuthGuard } from '../auth/guard/auth.guard';
-import { roles } from 'src/common/decorator/roles';
+import { RoleGuard } from '../auth/guard/roles.guard';
+import { roles } from '../../common/decorator/roles';
 
-@Controller('usuarios')
-@UseGuards(AuthGuard)  
-export class UsuariosController {
+@Controller('users')
+@UseGuards(AuthGuard, RoleGuard)
+export class UsersController {
   constructor(private readonly usuariosService: UsuariosService) {}
 
   @Post()
-  @roles('superadmin') // Solo superadmin puede crear usuarios
-  create(@Body() createUsuarioDto: CreateUsuarioDto) {
-    return this.usuariosService.create(createUsuarioDto);
+  @roles('superadmin')
+  create(@Body() createUsuario: CreateUsuario) {
+    return this.usuariosService.create(createUsuario);
   }
 
   @Get()
-  @roles('superadmin')  // Solo superadmin puede obtener todos los usuarios
+  @roles('superadmin')
   findAll() {
     return this.usuariosService.findAll();
   }
 
   @Get(':id')
-  findOne(@Param('id') id: number) {
-    return this.usuariosService.findOne(+id);  
+  @roles('superadmin')
+  findOne(@Param('id', ParseIntPipe) id: number) {
+    return this.usuariosService.findOne(+id);
   }
 
   @Patch(':id')
-  update(@Param('id') id: number, @Body() updateUsuarioDto: UpdateUsuarioDto) {
-    return this.usuariosService.update(+id, updateUsuarioDto);  
+  @roles('superadmin')
+  update(@Param('id', ParseIntPipe) id: number, @Body() updateUsuario: UpdateUsuario) {
+    return this.usuariosService.update(+id, updateUsuario);
+  }
+
+  @Patch('admin/:id')
+  @roles('superadmin')
+  changeToAdmin(@Param('id', ParseIntPipe) id: number, @Body() updateUsuario: UpdateUsuario) {
+    return this.usuariosService.changeToAdmin(+id);
+  }
+
+  @Patch('user/:id')
+  @roles('superadmin')
+  changeToUser(@Param('id', ParseIntPipe) id: number, @Body() updateUsuario: UpdateUsuario) {
+    return this.usuariosService.changeToUser(+id);
+  }
+
+  @Patch('role/:id')
+  @roles('superadmin')
+  changeRole(@Param('id', ParseIntPipe) id: number, @Body() updateUsuario: UpdateUsuario) {
+    return this.usuariosService.changeRole(+id);
   }
 
   @Delete(':id')
-  @roles('superadmin')  // Solo superadmin puede eliminar usuarios
+  @roles('superadmin')
   remove(@Param('id', ParseIntPipe) id: number) {
-    return this.usuariosService.softDelete(+id);
+    return this.usuariosService.remove(+id);
   }
 
   @Patch('restore/:id')
-  @roles('superadmin')  // Solo superadmin puede restaurar usuarios
+  @roles('superadmin')
   restore(@Param('id', ParseIntPipe) id: number) {
-    return this.usuariosService.restoreUser(+id);
+    return this.usuariosService.restore(+id);
   }
+
 }
